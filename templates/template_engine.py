@@ -1,4 +1,5 @@
 import re
+from .banner import BANNER
 """
 KEY DISCLAIMER: I am writing a lot of comments to explain my thought process. 
 Esp during testing/prelim phase I want to see exactly how I am doing this, and what I am trying to achieve
@@ -71,13 +72,19 @@ class EmailTemplateEngine():
         if missing_variables:
             raise Exception(f"Error: Missing variables: {','.join(missing_variables)}")
 
+
+        required_placeholders_in_body = ["bodyContent"]
+        missing_placeholders = [name for name in required_placeholders_in_body if name not in placeholders]
+        if missing_placeholders:
+            raise Exception(f"Error: Missing placeholders: {','.join(missing_placeholders)}")
+
         body = template_engine.body_content
         for p in placeholders:
             if p not in variables:
                 raise Exception(f"Error: Missing placeholder: {p}")
             body = body.replace("{{" + p +"}}", variables[p])
 
-        structured_output = f"Subject: {variables['subject']}\n\n{body}"
+        structured_output = f"Subject: {variables['subject']}\n \n{body}"
         return structured_output
 
 
@@ -92,8 +99,27 @@ class SocialMediaTemplateEngine():
     BANNER <- using ASCII inside of terminal (same generic image for each, no point in going over the top)
     Caption: {{caption}}
     """
-    def __init__(self):
-        self. = {}
+
+    def formatted_output(self, template_engine, variables):
+        pattern_finder = re.compile(r"{{(.*?)}}")  # simple regex: find all things inside non greedy style, and list them as regex objects
+        placeholders = pattern_finder.findall(template_engine.body_content)
+        email_required_variables = ["user", "caption"]
+        missing_variables = []
+
+        for var in email_required_variables:
+            if var not in variables:
+                missing_variables.append(var)
+        if missing_variables:
+            raise Exception(f"Error: Missing variables: {','.join(missing_variables)}")
+
+        body = template_engine.body_content
+        for p in placeholders:
+            if p not in variables:
+                raise Exception(f"Error: Missing placeholder: {p}")
+            body = body.replace("{{" + p + "}}", variables[p])
+
+        structured_output = f"{BANNER}\n{body}"
+        return structured_output
 
     # same general logic as email template, only final output differently
 
@@ -107,13 +133,13 @@ class RenderTemplateEngine():
     def __init__(self):
         self.engine_type= {
             "email": EmailTemplateEngine(),
-            # "socialmedia": SocialMediaTemplateEngine(),
+            "socialmedia": SocialMediaTemplateEngine(),
         }
     def render(self, template_name, handler, variables):
         template = handler.get_template_by_name(template_name)
         if template.type not in self.engine_type:
-            raise Exception(f"Unknown template type: {template.type} -- Please use one of following {TemplateHandler.list_templates()}")
-
+            raise Exception(
+                f"Unknown template type: {template.type} -- Please use one of following {', '.join(self.engine_type.keys())}")
         engine = self.engine_type[template.type]
         output = engine.formatted_output(template, variables)
         return output
