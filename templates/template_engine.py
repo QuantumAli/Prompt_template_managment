@@ -1,4 +1,9 @@
 import re
+"""
+KEY DISCLAIMER: I am writing a lot of comments to explain my thought process. 
+Esp during testing/prelim phase I want to see exactly how I am doing this, and what I am trying to achieve
+All unnecesary comments are removed before final git push (presuming system works) 
+"""
 
 # Simple way to create Template --> prototype to start, looking at optimizations later
 # Focusing on a modular system, Strategy Pattern, marking off project req as I go
@@ -15,17 +20,34 @@ class TemplateEngine():
         self.body_content = body_content
 
 class TemplateHandler():
+    """
+    add/register templates
+    retrieve a template by name
+    list all templates
+    """
     def __init__(self):
-        self.template_engine = {} #making it empty so that it can be filled with the template class
+        self.template_engine = {} #making it empty so that it can be filled with the template class, each individual template class. In essence, this is going to be our memory + our handler
 
-    def register_template(self):
-        return self # placeholder right now
+    def register_template(self, template):
+        if template.name in self.template_engine: # in works here because it checks keys not values
+            print(f"{template.name} Template already registered")
+            raise Exception('Error: Template already registered')
+        self.template_engine[template.name] = template # for all other cases
+        print(f"{template.name} Template registered")
+        # two things: no need to return bc it is self, and secondly, we are storing the entire template contents per name
+        # Such as "{{name}}, {{subject}} and {{content}} -> all inside of Email, or social media. Right now it is a dict.
 
-    def get_template_by_name(self):
-        return self
+    def get_template_by_name(self, name):
+        if name in self.template_engine:
+            return self.template_engine[name]
+        print("Template not registered")
+        raise Exception('Error: Template not registered')
+
 
     def list_templates(self):
-        return self
+        return self.template_engine.keys() # simply listing out all our keys NOT values
+
+
 
 class EmailTemplateEngine():
     """
