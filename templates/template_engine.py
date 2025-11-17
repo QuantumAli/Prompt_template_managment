@@ -14,9 +14,9 @@ class TemplateEngine():
     type (string, e.g. "email", "summary", "chat")
     body (string with placeholders like {{userName}})
     """
-    def __init__(self, name, _type, body_content):
+    def __init__(self, name, type, body_content):
         self.name = name
-        self._type = _type
+        self.type = type
         self.body_content = body_content
 
 class TemplateHandler():
@@ -45,7 +45,7 @@ class TemplateHandler():
 
 
     def list_templates(self):
-        return self.template_engine.keys() # simply listing out all our keys NOT values
+        return list(self.template_engine.keys()) # simply listing out all our keys NOT values
 
 
 
@@ -57,14 +57,30 @@ class EmailTemplateEngine():
     Final output formatted as:
     Subject: <subject value>
     <bodyContent value>
-
     """
-    def __init__(self):
-        self.template_engine = {}
+    # considering that this needs to handle its own rendering. And output it by itself. The Renderer only needs to call it, and this needs to be fully functional
+    def formatted_output(self, template_engine, variables):
+        pattern_finder = re.compile(r"{{(.*?)}}") # simple regex: find all things inside non greedy style, and list them as regex objects
+        placeholders = pattern_finder.findall(template_engine.body_content)
+        email_required_variables = ["subject", "bodyContent"]
+        missing_variables = []
 
-    # rules and logic to handle how the template is treated
-    # error check is located inside of here
-    # return output
+        for var in email_required_variables:
+            if var not in variables:
+                missing_variables.append(var)
+        if missing_variables:
+            raise Exception(f"Error: Missing variables: {','.join(missing_variables)}")
+
+        body = template_engine.body_content
+        for p in placeholders:
+            if p not in variables:
+                raise Exception(f"Error: Missing placeholder: {p}")
+            body = body.replace("{{" + p +"}}", variables[p])
+
+        structured_output = f"Subject: {variables['subject']}\n\n{body}"
+        return structured_output
+
+
 
 class SocialMediaTemplateEngine():
     """
@@ -77,7 +93,7 @@ class SocialMediaTemplateEngine():
     Caption: {{caption}}
     """
     def __init__(self):
-        self.template_engine = {}
+        self. = {}
 
     # same general logic as email template, only final output differently
 
@@ -89,7 +105,18 @@ class RenderTemplateEngine():
     - If a placeholder has no matching value, return a clear error or validation result.
     """
     def __init__(self):
-        self.template_engine = {}
+        self.engine_type= {
+            "email": EmailTemplateEngine(),
+            # "socialmedia": SocialMediaTemplateEngine(),
+        }
+    def render(self, template_name, handler, variables):
+        template = handler.get_template_by_name(template_name)
+        if template.type not in self.engine_type:
+            raise Exception(f"Unknown template type: {template.type} -- Please use one of following {TemplateHandler.list_templates()}")
+
+        engine = self.engine_type[template.type]
+        output = engine.formatted_output(template, variables)
+        return output
 
     # First match each of the templates
     # using regex (re) replace all the placeholders
